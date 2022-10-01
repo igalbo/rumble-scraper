@@ -50,12 +50,14 @@ router.get("/", async (req, res) => {
       .replace("/category", "")
       .replace("/", "");
 
-    result.push({ [category]: fetchCategoryItems(data, category) });
+    result.push({
+      [category.replace("-", "_")]: fetchCategoryItems(data, category),
+    });
   });
 
   res.json([
-    { "top-videos": topVideos },
-    { "editor-picks": editorPicks },
+    { top_videos: topVideos },
+    { editor_picks: editorPicks },
     ...result,
   ]);
 });
