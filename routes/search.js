@@ -55,6 +55,7 @@ router.get("/video", async (req, res) => {
         ? true
         : false,
       duration: $(this).find(".video-item--duration").attr("data-value"),
+      earned: $(this).find(".video-item--earned").attr("data-value"),
       views: $(this).find(".video-item--views").attr("data-value"),
       rumbles: $(this).find(".video-item--rumbles").attr("data-value"),
       date: $(this).find(".video-item--time").attr("datetime"),
