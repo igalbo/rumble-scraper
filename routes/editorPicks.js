@@ -5,24 +5,24 @@ const cheerio = require("cheerio");
 
 const itemsQuery = "ol > li.video-listing-entry > article";
 
-router.get("/:channel", async (req, res) => {
-  const { channel } = req.params;
-  const { sort = "", date = "", duration = "", page = "" } = req.query;
+router.get("/", async (req, res) => {
+  const {
+    sort = "",
+    date = "",
+    duration = "",
+    license = "",
+    page = "",
+  } = req.query;
   const results = [];
-  let $, title, subscribers, coverImage, data, thumbnail, verified;
+  let $, title, data;
 
   const queryString = `?${sort && `&sort=${sort}`}${date && `&date=${date}`}${
     duration && `&duration=${duration}`
-  }${page && `&page=${page}`}`;
-
-  if (!channel) {
-    res.status(400).json("Search term missing");
-    return;
-  }
+  }${license && `&license=${license}`}${page && `&page=${page}`}`;
 
   try {
     const response = await axios.get(
-      `https://rumble.com/c/${channel}${queryString}`
+      `https://rumble.com/editor-picks${queryString}`
     );
     data = response?.data;
     $ = cheerio.load(data);
@@ -48,6 +48,7 @@ router.get("/:channel", async (req, res) => {
       ).length
         ? true
         : false,
+      watching: $(this).find(".video-item--watching-now").attr("data-value"),
       duration: $(this).find(".video-item--duration").attr("data-value"),
       earned: $(this).find(".video-item--earned").attr("data-value"),
       views: $(this).find(".video-item--views").attr("data-value"),
@@ -57,19 +58,9 @@ router.get("/:channel", async (req, res) => {
   });
 
   title = $("h1.listing-header--title").text();
-  subscribers = $("span.subscribe-button-count").text();
-  coverImage = $("img.listing-header--backsplash-img").attr("src");
-  thumbnail = $("img.listing-header--thumb").attr("src");
-  verified = $("svg.listing-header--verified.verification-badge-icon").length
-    ? true
-    : false;
 
   res.json({
     title,
-    subscribers,
-    background_image: coverImage,
-    thumbnail,
-    verified,
     videos: results,
   });
 });

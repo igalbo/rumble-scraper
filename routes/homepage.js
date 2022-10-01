@@ -3,6 +3,60 @@ const router = express.Router();
 const axios = require("axios");
 const cheerio = require("cheerio");
 
+router.get("/:video", async (req, res) => {
+  const result = [];
+  const related = [];
+  const { video } = req.params;
+  let $ = "";
+  let data;
+  try {
+    response = await axios.get(`https://rumble.com/${video}`);
+    data = response?.data;
+    $ = cheerio.load(data);
+  } catch (err) {
+    console.log(err);
+    res.status(400).json(err);
+    return;
+  }
+
+  result.push({
+    title: $("article > h1.h1").text(),
+    channel_url: `https://rumble.com${$(".media-by--a").attr("href")}`,
+    channel: $(".media-by--a >.media-heading-name").text(),
+    verified: $(
+      ".media-by--a >.media-heading-name > svg.verification-badge-icon"
+    ).length
+      ? true
+      : false,
+    published: $(".media-heading-published")
+      .children()
+      .remove()
+      .end()
+      .text()
+      .substring(1),
+    views: $(".media-heading-info:not(.media-heading-published)")
+      .text()
+      .replace(" Views", ""),
+
+    subscribers: $(".subscribe-button-count").text().substring(1),
+    streamed: $(".streamed-on > time").attr("datetime"),
+    rumbles: $("span.rumbles-count").text(),
+  });
+
+  $("ul.mediaList-list > li", data).each(function () {
+    related.push({
+      title: $(this).children().children().find("h3").attr("title"),
+      channel: $(this).children().children().find("h4").text(),
+      url: `https://rumble.com${$(this).children("a").attr("href")}`,
+      thumbnail: $(this).find(".mediaList-image").attr("src"),
+      duration: $(this).find(".mediaList-duration").text(),
+      watching: $(this).find(".mediaList-liveCount").text() || undefined,
+    });
+  });
+
+  res.json({ video: result, related });
+});
+
 router.get("/", async (req, res) => {
   const editorPicks = [];
   const result = [];
