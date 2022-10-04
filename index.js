@@ -8,10 +8,11 @@ const videosRoute = require("./routes/videos");
 const editorPicksRoute = require("./routes/editorPicks");
 const app = express();
 
-app.use("/", homepageRoute);
 app.use("/search", searchRoute);
 app.use("/c", channelRoute);
 app.use("/videos", videosRoute);
 app.use("/editor-picks", editorPicksRoute);
+// Least specific route should be at the end
+app.use("/", homepageRoute);
 
 app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
