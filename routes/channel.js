@@ -2,12 +2,13 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const cheerio = require("cheerio");
+const { getItem } = require("../utils/sharedFunctions");
 
 const itemsQuery = "ol > li.video-listing-entry > article";
 
 router.get("/:channel", async (req, res) => {
   const { channel } = req.params;
-  const { sort = "", date = "", duration = "", page = "" } = req.query;
+  const { sort, date, duration, page } = req.query;
   const results = [];
   let $, title, subscribers, coverImage, data, thumbnail, verified;
 
@@ -32,21 +33,7 @@ router.get("/:channel", async (req, res) => {
     return;
   }
 
-  $(itemsQuery).each(function () {
-    const item = {};
-    $(this)
-      .find("*[class^=video-item]")
-      .each(function () {
-        const valueText = getValue($(this));
-        const keyText = cleanupText($(this).attr("class"));
-
-        item[keyText] = $(this).attr("href")
-          ? `https://rumble.com${valueText}`
-          : valueText;
-      });
-
-    results.push(item);
-  });
+  $(itemsQuery).each((i, item) => results.push(getItem(item, "video-item")));
 
   title = $("h1.listing-header--title").text();
   subscribers = $("span.subscribe-button-count").text();
@@ -62,28 +49,12 @@ router.get("/:channel", async (req, res) => {
     background_image: coverImage,
     thumbnail,
     verified,
+    sort,
+    date,
+    duration,
+    page,
     videos: results,
   });
 });
-
-const cleanupText = (text) => {
-  const reg = /^by-a by-a--c*(.*)/;
-  return text
-    .replaceAll("video-item--", "")
-    .replace("meta ", "")
-    .replace(reg, "channel_url")
-    .replace("by-verified verification-badge-icon", "verified");
-};
-
-const getValue = (text) => {
-  return (
-    text.attr("src") ||
-    text.attr("href") ||
-    text.attr("datetime") ||
-    text.attr("data-value") ||
-    text.text() ||
-    true
-  );
-};
 
 module.exports = router;

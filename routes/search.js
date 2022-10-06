@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const cheerio = require("cheerio");
+const { getItem } = require("../utils/sharedFunctions");
 
 const itemsQuery = "ol > li.video-listing-entry > article";
 
@@ -38,29 +39,7 @@ router.get("/video", async (req, res) => {
     return;
   }
 
-  $(itemsQuery).each(function () {
-    results.push({
-      title: $(this).find("h3.video-item--title").text(),
-      url: `https://rumble.com${$(this)
-        .find("a[class^=video-item]")
-        .attr("href")}`,
-      image: $(this).find("img.video-item--img").attr("src"),
-      channel: $(this).find("a[rel='author'] > div").text(),
-      channel_url: `https://rumble.com${$(this)
-        .find("a[rel='author']")
-        .attr("href")}`,
-      verified: $(this).find(
-        "a[rel='author'] > div > svg.verification-badge-icon"
-      ).length
-        ? true
-        : false,
-      duration: $(this).find(".video-item--duration").attr("data-value"),
-      earned: $(this).find(".video-item--earned").attr("data-value"),
-      views: $(this).find(".video-item--views").attr("data-value"),
-      rumbles: $(this).find(".video-item--rumbles").attr("data-value"),
-      date: $(this).find(".video-item--time").attr("datetime"),
-    });
-  });
+  $(itemsQuery).each((i, item) => results.push(getItem(item, "video-item")));
 
   res.json(results);
 });
@@ -88,17 +67,8 @@ router.get("/channel", async (req, res) => {
     return;
   }
 
-  $(itemsQuery).each(function () {
-    results.push({
-      url: `https://rumble.com${$(this)
-        .find("a[class^=channel-item]")
-        .attr("href")}`,
-      title: $(this).find("h3.channel-item--title").text(),
-      verified: $(this).find("a > h3 > svg.verification-badge-icon").length
-        ? true
-        : false,
-      subscribers: $(this).find(".channel-item--subscribers").text(),
-    });
+  $(itemsQuery).each((i, item) => {
+    results.push(getItem(item, "channel-item"));
   });
 
   res.json(results);
